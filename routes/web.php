@@ -11,6 +11,9 @@
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
+use App\Http\Controllers\Handlers\LicenseHandler;
+use Illuminate\Http\Request;
+
+Route::post('/ca/v1/licensor', function (Request $request) {
+    LicenseHandler::HandleRequest($request);
 });
