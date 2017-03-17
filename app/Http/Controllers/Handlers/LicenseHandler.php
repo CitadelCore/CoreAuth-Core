@@ -11,12 +11,17 @@
 namespace App\Http\Controllers\Handlers;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Provisioning\CoreLicense;
+use App\Http\Controllers\Provisioning\CoreOrganization;
+use App\Http\Controllers\Provisioning\CoreServer;
+use App\Http\Controllers\Provisioning\CoreUser;
 use App\Models\Licenses;
 use App\Models\Organizations;
 use App\Models\Servers;
+use App\Models\Users;
 
 class LicenseHandler extends Controller {
-  static function HandleRequest($request) {
+  static function HandleRequest($request, $after) {
     $organizations = new Organizations;
     $clientip = $_SERVER['REMOTE_ADDR'];
     if ($request->has("Organization")) {
@@ -38,10 +43,7 @@ class LicenseHandler extends Controller {
                         if (Servers::where('serial', $license['serial'])->count() <= $license['num_servers']) {
                           if ($server['serial'] == $license['serial']) {
                             if ($server['hostname'] == $request->input('ServerHostname')) {
-                              // Return success.
-                              $response = array("type"=>"response", "id"=>"1", "attributes"=>array("response_friendly"=>"Success.", "response_code"=>"key_accepted"));
-                              header('Content-Type: application/json');
-                              echo json_encode($response);
+                              return $after();
                             } else {
                               // Hostname does not match
                               $response = array("type"=>"error", "id"=>"1", "attributes"=>array("error_friendly"=>"Internal security error.", "error_code"=>"security_error"));
@@ -93,22 +95,19 @@ class LicenseHandler extends Controller {
                       if ($license['disabled'] == false) {
                         if (Servers::where('serial', $license['serial'])->count() < $license['num_servers']) {
                           // License key is valid. Let's create the new server.
-                          $servers = new Servers;
+                          $server = new CoreServer;
 
-                          $servers->serial = $request->input('LicenseSerial');
-                          $servers->org_id = $organization['org_id'];
-                          $servers->hostname = $request->input('ServerHostname');
-                          $servers->ipaddress = $clientip;
-                          $servers->apikey = bin2hex(openssl_random_pseudo_bytes(15));
-                          $servers->production = true;
+                          $server->serial = $request->input('LicenseSerial');
+                          $server->org_id = $organization['org_id'];
+                          $server->hostname = $request->input('ServerHostname');
+                          $server->ipaddress = $clientip;
+                          $server->apikey = bin2hex(openssl_random_pseudo_bytes(15));
+                          $server->production = true;
 
-                          // Save the new server to the database.
-                          $servers->save();
+                          // Provision the new server.
+                          $server->Provision();
 
-                          // Return success.
-                          $response = array("type"=>"response", "id"=>"1", "attributes"=>array("response_friendly"=>"Success.", "response_code"=>"key_accepted"));
-                          header('Content-Type: application/json');
-                          echo json_encode($response);
+                          return $after();
 
                         } else {
                           // All server slots are used up!
@@ -173,29 +172,6 @@ class LicenseHandler extends Controller {
       header('Content-Type: application/json');
       echo json_encode($response);
     }
-  }
-
-  static function CreateOrganization($name, $email, $paymentid) {
-    $organization = new Organizations;
-    $organization->org_name = $name;
-    $organization->operator_email = $email;
-    $organization->payment_id = $paymentid;
-    $organization->save();
-  }
-
-  static function CreateLicense($comment, $expiry, $org_id, $allow2fa, $allowsso, $allowre, $allowapi, $disabled, $num_servers) {
-    $license = new Licenses;
-    $license->key = bin2hex(openssl_random_pseudo_bytes(30));
-    $license->comment = $comment;
-    $license->expiry = $expiry;
-    $license->org_id = $org_id;
-    $license->allow_2fa = $allow2fa;
-    $license->allow_extsso = $allowsso;
-    $license->allow_riskengine = $allowre;
-    $license->allow_api = $allowapi;
-    $license->disabled = $disabled;
-    $license->num_servers = $num_servers;
-    $license->save();
   }
 }
  ?>
