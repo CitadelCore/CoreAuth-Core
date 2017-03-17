@@ -30,8 +30,8 @@ class CoreUser extends Controller {
   public function Provision() {
     $user = new Users;
     $user->server_id = $this->server_id;
-    $user->org_id = $this->$org_id;
-    $user->username = $this->$username;
+    $user->org_id = $this->org_id;
+    $user->username = $this->username;
     $user->mfa_enabled = false;
     $user->riskengine_enabled = false;
     $user->save();

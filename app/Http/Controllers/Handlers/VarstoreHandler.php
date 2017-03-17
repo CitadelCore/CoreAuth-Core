@@ -10,7 +10,6 @@
 
 namespace App\Http\Controllers\Handlers;
 
-use App\Http\Controllers\Handlers\LicenseHandler;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Provisioning\CoreLicense;
 use App\Http\Controllers\Provisioning\CoreOrganization;
@@ -23,10 +22,6 @@ use App\Models\Users;
 
 class VarstoreHandler extends Controller {
   static function HandleRequest($request) {
-    $req = LicenseHandler::HandleRequest($request, function(){
-    return true;
-    });
-    if ($req == true) {
       $clientip = $_SERVER['REMOTE_ADDR'];
       $server = Servers::where('ipaddress', $clientip)->first();
       $organization = Organizations::where('org_name', $request->input('Organization'))->first();
@@ -78,9 +73,6 @@ class VarstoreHandler extends Controller {
         header('Content-Type: application/json');
         echo json_encode($response);
       }
-    } else {
-      echo $req;
-    }
   }
 }
 

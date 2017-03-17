@@ -17,6 +17,7 @@ class Organizations extends Migration
         Schema::create('organizations', function (Blueprint $table) {
           $table->increments('org_id');
           $table->string('org_name');
+          $table->string('org_key');
           $table->string('operator_email');
           $table->integer('payment_id');
           $table->timestamps();
