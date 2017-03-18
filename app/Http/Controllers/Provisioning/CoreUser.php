@@ -33,7 +33,13 @@ class CoreUser extends Controller {
     $user->org_id = $this->org_id;
     $user->username = $this->username;
     $user->mfa_enabled = false;
-    $user->riskengine_enabled = false;
+
+    if ($this->riskengine_enabled != null) {
+      $user->riskengine_enabled = $this->riskengine_enabled;
+    } else {
+      $user->riskengine_enabled = false;
+    }
+
     $user->save();
   }
 

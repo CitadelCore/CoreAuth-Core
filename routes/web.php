@@ -14,6 +14,7 @@
 use App\Http\Controllers\Handlers\LicenseHandler;
 use App\Http\Controllers\Handlers\VarstoreHandler;
 use App\Http\Controllers\Handlers\MfaHandler;
+use App\Http\Controllers\Handlers\RiskEngineHandler;
 use Illuminate\Http\Request;
 
 //use App\Http\Controllers\Provisioning\CoreOrganization;
@@ -57,12 +58,12 @@ Route::post('/ca/v1/varstore', function (Request $request) {
   VarstoreHandler::HandleRequest($request);
 })->middleware('licensed');
 
-Route::post('/ca/v1/mfaenbl', function (Request $request) {
-  MfaHandler::EnableMfa($request);
-})->middleware('licensed');
-
 Route::post('/ca/v1/mfaprov', function (Request $request) {
   MfaHandler::ProvisionMfa($request);
+})->middleware('licensed');
+
+Route::post('/ca/v1/mfaenbl', function (Request $request) {
+  MfaHandler::EnableMfa($request);
 })->middleware('licensed');
 
 Route::post('/ca/v1/mfaprge', function (Request $request) {
@@ -75,4 +76,12 @@ Route::post('/ca/v1/mfainfo', function (Request $request) {
 
 Route::post('/ca/v1/mfacheck', function (Request $request) {
   MfaHandler::CheckMfa($request);
+})->middleware('licensed');
+
+Route::post('/ca/v1/re/append', function (Request $request) {
+  RiskEngineHandler::AddEntry($request);
+})->middleware('licensed');
+
+Route::post('/ca/v1/re/query', function (Request $request) {
+  RiskEngineHandler::QueryEngine($request);
 })->middleware('licensed');

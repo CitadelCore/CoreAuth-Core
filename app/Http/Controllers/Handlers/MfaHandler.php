@@ -10,7 +10,6 @@
 
 namespace App\Http\Controllers\Handlers;
 
-use App\Http\Controllers\Handlers\LicenseHandler;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Provisioning\CoreLicense;
 use App\Http\Controllers\Provisioning\CoreOrganization;
@@ -91,7 +90,7 @@ class MfaHandler extends Controller {
     $server = Servers::where('ipaddress', $clientip)->first();
     $organization = Organizations::where('org_name', $request->input('Organization'))->first();
     $license = Licenses::where('serial', $request->input('LicenseSerial'))->first();
-    if ($request->has('Username') && $request->has('token')) {
+    if ($request->has('Username') && $request->has('Token')) {
       $user = Users::where('username', $request->input('Username'))->where('org_id', $organization['org_id'])->where('server_id', $server['server_id'])->first();
       if ($user != null) {
         if ($user['mfa_enabled'] == true) {
@@ -99,7 +98,7 @@ class MfaHandler extends Controller {
               $request->input('Username'),
               $user['mfa_secret']
           );
-          if ($totp->verify($request->input('token')) == true) {
+          if ($totp->verify($request->input('Token')) == true) {
             $response = array("type"=>"response", "id"=>"1", "attributes"=>array("response_friendly"=>"2FA token is valid.", "response_code"=>"2fa_valid"));
             header('Content-Type: application/json');
             echo json_encode($response);
@@ -150,6 +149,10 @@ class MfaHandler extends Controller {
         $user->mfa_enabled = false;
 
         $user->Update();
+
+        $response = array("type"=>"response", "id"=>"1", "attributes"=>array("response_friendly"=>"2FA token purged successfully.", "response_code"=>"2fa_purged"));
+        header('Content-Type: application/json');
+        echo json_encode($response);
       } else {
         // No metadata exists! Fail.
         $response = array("type"=>"error", "id"=>"1", "attributes"=>array("error_friendly"=>"No user metadata exists.", "error_code"=>"2fa_user_nodata"));
@@ -198,20 +201,30 @@ class MfaHandler extends Controller {
     $server = Servers::where('ipaddress', $clientip)->first();
     $organization = Organizations::where('org_name', $request->input('Organization'))->first();
     $license = Licenses::where('serial', $request->input('LicenseSerial'))->first();
-    if ($request->has('Username')) {
+    if ($request->has('Username') && $request->has('Token')) {
       $user = Users::where('username', $request->input('Username'))->where('org_id', $organization['org_id'])->where('server_id', $server['server_id'])->first();
       if ($user != null) {
-        $user = new CoreUser;
-        $user->username = $request->input('Username');
-        $user->server_id = $server['server_id'];
-        $user->org_id = $organization['org_id'];
-        $user->mfa_enabled = true;
+        $totp = new TOTP(
+            $request->input('Username'),
+            $user['mfa_secret']
+        );
+        if ($totp->verify($request->input('Token')) == true) {
+          $user = new CoreUser;
+          $user->username = $request->input('Username');
+          $user->server_id = $server['server_id'];
+          $user->org_id = $organization['org_id'];
+          $user->mfa_enabled = true;
 
-        $user->Update();
+          $user->Update();
 
-        $response = array("type"=>"response", "id"=>"1", "attributes"=>array("response_friendly"=>"Successfully enabled and enforced 2FA.", "response_code"=>"2fa_enabled"));
-        header('Content-Type: application/json');
-        echo json_encode($response);
+          $response = array("type"=>"response", "id"=>"1", "attributes"=>array("response_friendly"=>"Successfully enabled and enforced 2FA.", "response_code"=>"2fa_enabled"));
+          header('Content-Type: application/json');
+          echo json_encode($response);
+        } else {
+          $response = array("type"=>"error", "id"=>"1", "attributes"=>array("error_friendly"=>"2FA token is invalid.", "error_code"=>"2fa_invalid"));
+          header('Content-Type: application/json');
+          echo json_encode($response);
+        }
       } else {
         // No metadata exists! Fail.
         $response = array("type"=>"error", "id"=>"1", "attributes"=>array("error_friendly"=>"No user metadata exists.", "error_code"=>"2fa_user_nodata"));
