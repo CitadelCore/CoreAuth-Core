@@ -130,7 +130,7 @@ class RiskEngineHandler extends Controller {
         break;
         case "recent_browser":
         $engine_recent = RiskEngine::where('username', $user['username'])->where('org_id', $organization['org_id'])->where('server_id', $server['server_id'])->where('event_type', $entry['event_type'])->first();
-        if ($recent['browser'] == false) {
+        if ($recent[$type] == false) {
           if ($entry['event_data'] != $engine_recent) {
             $level = $level + $entry['event_risk'];
           } else {
@@ -138,7 +138,7 @@ class RiskEngineHandler extends Controller {
             $level = $level - 15;
           }
           $iterations[$type] = $iterations[$type] + 1;
-          $recent['browser'] = true;
+          $recent[$type] = true;
         } else {
           $iterations[$type] = 1;
         }
