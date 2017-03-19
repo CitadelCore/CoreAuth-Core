@@ -74,6 +74,30 @@ class VarstoreHandler extends Controller {
         echo json_encode($response);
       }
   }
+
+  static function DeleteUser($request) {
+    $clientip = $_SERVER['REMOTE_ADDR'];
+    $server = Servers::where('ipaddress', $clientip)->first();
+    $organization = Organizations::where('org_name', $request->input('Organization'))->first();
+    $license = Licenses::where('serial', $request->input('LicenseSerial'))->first();
+    if ($request->has("Username")) {
+      $user = Users::where('username', $request->input('Username'))->where('org_id', $organization['org_id'])->where('server_id', $server['server_id'])->first;
+      if ($user != null) {
+        $user->delete();
+        $response = array("type"=>"response", "id"=>"1", "attributes"=>array("response_friendly"=>"Success.", "response_code"=>"query_accepted"));
+        header('Content-Type: application/json');
+        echo json_encode($response);
+      } else {
+        $response = array("type"=>"error", "id"=>"1", "attributes"=>array("error_friendly"=>"User does not exist.", "error_code"=>"user_not_exist"));
+        header('Content-Type: application/json');
+        echo json_encode($response);
+      }
+    } else {
+      $response = array("type"=>"error", "id"=>"1", "attributes"=>array("error_friendly"=>"Not enough parameters.", "error_code"=>"param_error"));
+      header('Content-Type: application/json');
+      echo json_encode($response);
+    }
+  }
 }
 
 ?>

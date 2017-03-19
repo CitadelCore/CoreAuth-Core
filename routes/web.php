@@ -58,6 +58,10 @@ Route::post('/ca/v1/varstore', function (Request $request) {
   VarstoreHandler::HandleRequest($request);
 })->middleware('licensed');
 
+Route::post('/ca/v1/deluser', function (Request $request) {
+  VarstoreHandler::DeleteUser($request);
+})->middleware('licensed');
+
 Route::post('/ca/v1/mfaprov', function (Request $request) {
   MfaHandler::ProvisionMfa($request);
 })->middleware('licensed');
